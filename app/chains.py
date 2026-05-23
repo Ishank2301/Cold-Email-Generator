@@ -4,17 +4,17 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.exceptions import OutputParserException
 
+
 class Chain:
     def __init__(self):
         # Use Ollama instead of Groq
         self.llm = ChatOllama(
-            model="llama3",  # or "llama3.2:3b" for faster responses
-            temperature=0
+            model="llama3", temperature=0  # or "llama3.2:3b" for faster responses
         )
 
+    # Crete a Personality for a job agent
     def extract_jobs(self, cleaned_text):
-        prompt_extract = PromptTemplate.from_template(
-            """
+        prompt_extract = PromptTemplate.from_template("""
             ### SCRAPED TEXT FROM WEBSITE:
             {page_data}
             ### INSTRUCTION:
@@ -22,8 +22,7 @@ class Chain:
             Your job is to extract the job postings and return them in JSON format containing the following keys: `role`, `experience`, `skills` and `description`.
             Only return the valid JSON.
             ### VALID JSON (NO PREAMBLE):
-            """
-        )
+            """)
         chain_extract = prompt_extract | self.llm
         res = chain_extract.invoke(input={"page_data": cleaned_text})
         try:
@@ -34,8 +33,7 @@ class Chain:
         return res if isinstance(res, list) else [res]
 
     def write_mail(self, job, links):
-        prompt_email = PromptTemplate.from_template(
-            """
+        prompt_email = PromptTemplate.from_template("""
             ### JOB DESCRIPTION:
             {job_description}
 
@@ -51,16 +49,16 @@ class Chain:
             Do not provide a preamble.
             ### EMAIL (NO PREAMBLE):
 
-            """
-        )
+            """)
         chain_email = prompt_email | self.llm
         res = chain_email.invoke({"job_description": str(job), "link_list": links})
         return res.content
 
+
 if __name__ == "__main__":
     # Test the chain
     chain = Chain()
-    
+
     # Test with sample data
     sample_job = """
     Role: ML Engineer
@@ -68,8 +66,8 @@ if __name__ == "__main__":
     Skills: Python, TensorFlow, PyTorch
     Description: Build and deploy ML models
     """
-    
+
     sample_links = ["https://atliq.com/project1", "https://atliq.com/project2"]
-    
+
     email = chain.write_mail(sample_job, sample_links)
     print(email)
